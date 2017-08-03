@@ -35,7 +35,7 @@ This is data I gleaned from multiple sources with contains information on NFL pl
 
 There are three datasets I'm using for this--one with injury data for each player per season from 2009-2016; one for NFL combine measurements for players from 1999-2015; and another with NFL statistics including birthdates, career performance statistics (passing yards, receptions, rushing average, etc.) and draft data (round, position).
 
-As this data did not exists as a unified, clean dataset prior to this project, I had to do a fair bit of work to gather and clean the data prior to performing this exploratory analysis in R. For details on that process, you can see my write-up on that here (ADD LINK HERE).
+As this data did not exists as a unified, clean dataset prior to this project, I had to do a fair bit of work to gather and clean the data prior to performing this exploratory analysis in R. For details on that process, you can see my write-up on that [here](https://github.com/sethfarns/udacity-data-analyst-nanodegree/blob/master/exploratory-data-analysis-with-r/Wrangle%2BFootball%2BStatistics%2BData.html).
 
 # Univariate Plots Section
 
