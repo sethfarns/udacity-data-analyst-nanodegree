@@ -53,15 +53,27 @@ summary(stats)
 Our injuries data set contains 5,936 observations of 8 variables. The combine data set contains 1,295 observations of 18 variables, and the stats dataset contains 1,981 observations of 33 variables. There are more observations for the injury dataset because it contains injury data for each season of the players' careers, while the other two datasets cover their entire careers. The injury data needed to be seasonal in order to measure the effect of age on injury rates season-by-season. These are all relationable tables, with 'Player' and 'Pos' the common keys between the three tables. The 'Pos' field is the primary factor variable we'll be exploring with these three datasets. There is also a 'position_group' factor, which is just a condensing of the position variable (from 23 options down to 10).
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots3}
-plot1 = ggplot(aes(Total_Injured), data=injuries) +
-  geom_histogram(bins=16, color='red', fill='gray') +
-  xlab('Games Missed by Injury (16-game season)')
 
-plot2 = ggplot(aes(injured_pct), data=combine) +
-  geom_histogram(bins=50, color='red', fill='gray') +
-  xlab('Career Injury Rate')
+plot_hist <- function(data, var, binwidth, label, filter=TRUE){
+  if(filter==TRUE){
+    data_subset = data[data[var] != 0 & data[var] == data[var],]
+  } else {
+    data_subset = data
+  }
+  plot = ggplot(aes(data_subset[[var]]), data=data_subset) +
+    geom_histogram(color='red', fill='gray', binwidth=binwidth) +
+    xlab(label)
+  print(var)
+  print(summary(data_subset[[var]]))
+  return(plot)
+}
+
+plot1 = plot_hist(injuries, 'Total_Injured', 1, 'Games Missed by Injury (16-game season)', FALSE)
+
+plot2 = plot_hist(combine, 'injured_pct', 0.05, 'Career Injury Rate', FALSE)
 
 grid.arrange(plot1, plot2)
+
 ```
 
 The vast majority of players suffered no injuries each season, resulting in a mostly skewed-right long tail histogram. It is noteworthy, however, that there's a significant spike at 16 games, for players who missed the entire season due to injury. I would imagine this is probably due to players injured before the season begins being placed on injured reserve, and not being able to return due to NFL rules, even if they might be healthy enough to play late in the season.
@@ -71,48 +83,28 @@ The histogram for career injury rate is similarly skewed right, though in this c
 Let's take a look at player age in another histogram.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots4}
-ggplot(aes(age), data=injuries) +
-  geom_histogram(bins=16, color='red', fill='gray') +
-  xlab('Age at Start of NFL Season')
+plot = plot_hist(injuries, 'age', 1, 'Age at Start of NFL Season')
+
+grid.arrange(plot)
 ```
 
-This one's almost a normal distribution, with most players in their mid-twenties, and the numbers tapering off in each direction down to the early twenties and the early thirties. There is one little spike around age 30, but I'm not sure if that's statistically significant. Let's look at the same data on a log10 scale.
-
-```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots5}
-ggplot(aes(age), data=injuries) +
-  geom_histogram(bins=16, color='red', fill='gray') +
-  scale_x_log10() +
-  xlab('Age at Start of NFL Season (log10)')
-```
-
-With the log10 transformation, it looks like more of a normal distribution, and the spike around 30 is all but gone.
-
-Now let's look at distributions of players by the categorical 'position' variable.
+This one's almost a normal distribution, with most players in their mid-twenties, and the numbers tapering off in each direction down to the early twenties and the early thirties. There is one little spike around age 30, but I'm not sure if that's statistically significant. Now let's look at distributions of players by the categorical 'position' variable.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots6}
 ggplot(aes(Pos), data=combine) +
   geom_histogram(stat='count', color='red', fill='gray') +
   xlab('Position')
+
+summary(combine$Pos)
 ```
 
 Lots of wide receivers and running backs (teams typically carry 3-6 of each), not so many kickers and punters (each team carries just 1). So there's nothing surprising here. Now let's look at the measurables height, weight, arm length, and hand size.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots7}
-plot1 = ggplot(aes(heightinchestotal), data=combine) +
-  geom_histogram(binwidth=1, color='red', fill='gray') +
-  xlab('Height (in inches)')
-
-plot2 = ggplot(aes(weight), data=combine) +
-  geom_histogram(binwidth=5, color='red', fill='gray') +
-  xlab('Weight (in pounds)')
-
-plot3 = ggplot(aes(arms), data=subset(combine, arms != 0)) +
-  geom_histogram(binwidth=0.2, color='red', fill='gray') +
-  xlab('Arm Length (inches)')
-
-plot4 = ggplot(aes(hands), data=subset(combine, hands != 0)) +
-  geom_histogram(binwidth=0.2, color='red', fill='gray') +
-  xlab('Hand Size (inches)')
+plot1 = plot_hist(combine, 'heightinchestotal', 1, 'Height (in inches)')
+plot2 = plot_hist(combine, 'weight', 5, 'Weight (in pounds)')
+plot3 = plot_hist(combine, 'arms', 0.2, 'Arm Length (inches)')
+plot4 = plot_hist(combine, 'hands', 0.2, 'Hand Size (inches)')
 
 grid.arrange(plot1, plot2, plot3, plot4, ncol=2)
 ```
@@ -124,36 +116,19 @@ For weight, the range is between 164 and 349 lbs. The distribution is a little m
 Arm length and hand size appear to be mostly normal distributions. It is worth noting that these two measurements were not available for all players, as is also the case with most of the combine drills that we'll look at next.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots8}
-plot1 = ggplot(aes(bench), data=subset(combine, bench != 0)) +
-  geom_histogram(binwidth=1, color='red', fill='gray') +
-  xlab('Bench Press Reps (225 lbs each)')
-
-plot2 = ggplot(aes(broad), data=subset(combine, broad != 0)) +
-  geom_histogram(binwidth=1, color='red', fill='gray') +
-  xlab('Broad Jump (inches)')
-
-plot3 = ggplot(aes(vertical), data=subset(combine, vertical != 0)) +
-  geom_histogram(binwidth=0.5, color='red', fill='gray') +
-  xlab('Vertical Jump (inches)')
+plot1 = plot_hist(combine, 'bench', 1, 'Bench Press Reps (225 lbs each)')
+plot2 = plot_hist(combine, 'broad', 1, 'Broad Jump (inches)')
+plot3 = plot_hist(combine, 'vertical', 0.5, 'Vertical Jump (inches)')
 
 grid.arrange(plot1, plot2, plot3)
-
 ```
 
 Our first three plots of the combine fitness test results--bench press, broad jump, and vertical jump--all show relatively normal distributions. There are some significant outliers on these, especially on the lower end of the broad jump.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots9}
-plot1 = ggplot(aes(tenyd), data=subset(combine, tenyd != 0)) +
-  geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('10 Yard Dash (seconds)')
-
-plot2 = ggplot(aes(twentyyd), data=subset(combine, twentyyd != 0)) +
-  geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('20 Yard Dash (seconds)')
-
-plot3 = ggplot(aes(fortyyd), data=subset(combine, fortyyd != 0)) +
-  geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('40 Yard Dash (seconds)')
+plot1 = plot_hist(combine, 'tenyd', 0.01, '10 Yard Dash (seconds)')
+plot2 = plot_hist(combine, 'twentyyd', 0.01, '20 Yard Dash (seconds)')
+plot3 = plot_hist(combine, 'fortyyd', 0.01, '40 Yard Dash (seconds)')
 
 grid.arrange(plot1, plot2, plot3)
 ```
@@ -183,14 +158,8 @@ grid.arrange(plot1, plot2, plot3)
 When looking at the 40-yard dash distribution next to its log10 and square root transformations, you can see how smooth the distribution is with the transformations.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots11}
-plot1 = ggplot(aes(twentyss), data=subset(combine, twentyss != 0)) +
-  geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('20 Yard Short Shuttle (seconds)')
-
-plot2 = ggplot(aes(threecone), data=subset(combine, threecone != 0)) +
-  geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('3 Cone Drill (seconds)') +
-  scale_x_log10()
+plot1 = plot_hist(combine, 'twentyss', 0.01, '20 Yard Short Shuttle (seconds)')
+plot2 = plot_hist(combine, 'threecone', 0.01, '3 Cone Drill (seconds)')
 
 grid.arrange(plot1, plot2)
 ```
@@ -198,38 +167,34 @@ grid.arrange(plot1, plot2)
 These last two tests, the 20-yard short shuttle and the 3-cone drill, measure agility and change of direction ability. These mostly look like unimodal normal distributions, with maybe a slight skew to the right, although with the short shuttle there are some other peaks in there, notably at 4.0, 4.4, and around 4.75 seconds. Now let's look at some NFL player statistics.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots12}
-ggplot(aes(Yds), 
-       data=subset(stats, (Pos == 'QB' & Yds > 0))) +
-  geom_histogram(binwidth=500, color='red', fill='gray') +
-  xlab('Career Passing Yards') +
+stats$seasons_played = stats$End_Year - stats$Start_Year + 1
+qb_stats <- subset(stats, (Pos == 'QB' & Yds > 0))
+plot = plot_hist(qb_stats, 'Yds', 1000, 'Career Passing Yards') +
   scale_x_continuous(breaks=seq(0,40000,1000)) +
   xlim(0,40000)
+grid.arrange(plot)
 ```
 
 Here we can see career passing yards. I had to cut off the data at 40,000 yards, since it made it difficult to see most of the data, which is under 5,000 yards. Another clearly skewed-right distribution with this statistic. Let's look at the same thing for rushing yards.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots13}
-ggplot(aes(Yds), data=subset(stats, Pos == 'RB' & Yds > 0)) +
-  geom_histogram(binwidth=500, color='red', fill='gray') +
-  xlab('Career Rushing Yards') +
+rb_stats = subset(stats, (Pos == 'RB' & Yds > 0))
+plot = plot_hist(rb_stats, 'Yds', 500, 'Career Rushing Yards') +
   scale_x_continuous(breaks=seq(0, 15000, 1000))
+grid.arrange(plot)
 ```
 
 Again, another skewed-right long-tail distribution. We do have a much bigger sample size here than with the passing yards, which makes sense, as there are a lot more NFL players who rush the ball than throw it, especially when you consider that most quarterbacks would also register on this statistic. But I think to get a better view of these career statistics, it will be more useful to try and average these over each season of a player's career.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots14}
-stats$seasons_played <- stats$End_Year - stats$Start_Year + 1
-
-plot1 = ggplot(aes((Yds / seasons_played)), 
-       data=subset(stats, Pos == 'QB' & Yds > 0)) +
-  geom_histogram(binwidth=100, color='red', fill='gray') +
-  xlab('Average Passing Yards per Season') +
+qb_stats$yards_per_season = qb_stats$Yds / qb_stats$seasons_played
+plot1 = plot_hist(qb_stats, 'yards_per_season', 200,
+                  'Average Passing Yards per Season') + 
   scale_x_continuous(breaks=seq(0,4500,500))
 
-plot2 = ggplot(aes((Yds / seasons_played)), 
-       data=subset(stats, Pos == 'RB' & Yds > 0)) +
-  geom_histogram(binwidth=50, color='red', fill='gray') +
-  xlab('Average Rushing Yards per Season') +
+rb_stats$yards_per_season = rb_stats$Yds / rb_stats$seasons_played
+plot2 = plot_hist(rb_stats, 'yards_per_season', 50,
+                  'Average Rushing Yards per Season') +
   scale_x_continuous(breaks=seq(0,1500,100))
 
 grid.arrange(plot1, plot2)
@@ -240,11 +205,11 @@ The plot for average passing yards is mostly skewed-right, but there is also a s
 Let's do one more plot to look at draft position
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots15}
-ggplot(aes(Draft_Pick), 
-       data=subset(stats, Draft_Pick == Draft_Pick)) +
-  geom_histogram(color='red', fill='gray') +
-  xlab('Draft Position') +
+draft_data = subset(stats, Draft_Pick != 'Undrafted')
+plot = plot_hist(draft_data, 'Draft_Pick', 10, 'Draft Position') +
   scale_x_continuous(breaks=seq(0, 250, 25))
+
+grid.arrange(plot)
 ```
 
 Again, another long-tail, skewed-right distribution. It's interesting that while one player is picked at each position in the draft each year, this plot shows there are far more early picks in the NFL than late picks. Multiple factors could explain this, including just the general talent level of early draft picks versus later ones.
@@ -290,6 +255,9 @@ ggplot(aes(x = age, y = Total_Injured), data=injuries) +
   ylab("Injured Games per Season") +
   geom_line(stat='summary', fun.y=mean, aes(color="Mean")) +
   geom_smooth(method='lm', aes(color="Regression"))
+
+print("Correlation:")
+cor(injuries$age, injuries$Total_Injured)
 ```
 
 Somewhat surprisingly, there is clearly very little correlation between player age at the beginning of the season and games missed due to injury. There are a lot of factors that could be at play here--when an older player gets hurt, often he won't be signed by any team and basically 'retires' at that point. Those cases won't show in the data. Also, injuries occur for a variety of reasons, many being freak accidents that wouldn't correlate to age. To see a true correlation, we would need data for injured players who get released or don't get signed by any teams due to injury, as well as categories of injuries. Let's look next at the various combine measurements and see what correlations exist between them.
@@ -316,23 +284,39 @@ Here you can see a slightly greater correlation (0.03 vs. -0.01 for all the data
 Can we find correlations between injury rates and others of our variables? Let's look at a few of them now.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots3}
-plot1 = ggplot(aes(x = weight, y = injured_pct),
-               data=combine) +
-  geom_jitter(alpha=0.2) +
-  xlab("Player Weight") +
-  ylab("Injured Percentage") +
-  geom_line(stat='summary', fun.y=mean, aes(color='Mean')) +
-  geom_smooth(method='lm', aes(color='Regression'))
 
-plot2 = ggplot(aes(x = heightinchestotal, y = injured_pct),
+combine$weight.bucket = cut(combine$weight,
+                            c(150,190,210,230,250,300,380))
+
+plot1 = ggplot(aes(x = weight.bucket, y = injured_pct),
                data=combine) +
-  geom_jitter(alpha=0.2) +
-  xlab("Player Height") +
-  ylab("Injured Percentage") +
-  geom_line(stat='summary', fun.y=mean, aes(color='Mean')) +
-  geom_smooth(method='lm', aes(color='Regression'))
+  geom_jitter(alpha=0.3) +
+  geom_boxplot(alpha=.5, color='blue') +
+  stat_summary(fun.y='mean',
+               geom='point',
+               color='red',
+               shape=8,
+               size=4)
+
+combine$heightinchestotal.bucket = cut(combine$heightinchestotal,
+                            c(64, 72, 74, 76, 82))
+
+plot2 = ggplot(aes(x = heightinchestotal.bucket, y = injured_pct),
+               data=combine) +
+  geom_jitter(alpha=0.3) +
+  geom_boxplot(alpha=.5, color='blue') +
+  stat_summary(fun.y='mean',
+               geom='point',
+               color='red',
+               shape=8,
+               size=4)
 
 grid.arrange(plot1, plot2)
+
+print("Weight to injured percentage:")
+cor(combine$weight, combine$injured_pct)
+print("Height to injured percentage:")
+cor(combine$heightinchestotal, combine$injured_pct)
 ```
 
 Clearly not much correlation for these, but I wonder what it would look like to compute density as weight divided by height, and see how that correlates to other variables.
@@ -344,16 +328,30 @@ ggplot(aes(x = density, y = injured_pct), data=combine) +
   geom_jitter(alpha=0.2) +
   xlab("Player Density") +
   ylab("Injured Percentage") +
-  geom_line(stat='summary', fun.y=mean, aes(color='Mean')) +
   geom_smooth(method='lm', aes(color='Regression'))
+
+print("Density to injured percentage:")
+cor(combine$density, combine$injur)
 ```
 
 Okay, so even when using a composite statistic for weight and height, we're not going to be able to correlate this to percentage of games missed over player's career. Possibly a dead end, but we'll see what these look like later when we break them down by position. Let's switch gears a bit and take a more generic look at correlations between our various features and see what we can find. We'll start with the combine measurements.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots5}
-combine_subset <- combine[, c(2,3,4,5,6,8,9,10,11,12,17,19)]
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height="400px", out.width="400px", fig.height=10, fig.width=10, Bivariate_Plots5}
+combine_subset <- combine[, c(
+  'arms',
+  'bench',
+  'broad',
+  'fortyyd',
+  'hands',
+  'tenyd',
+  'threecone',
+  'twentyss',
+  'twentyyd',
+  'injured_pct',
+  'density'
+)]
 cor(combine_subset)
-ggpairs(combine_subset, cardinality_threshold=15)
+ggpairs(combine_subset)
 ```
 
 The strongest correlations are between arms and hand size (0.995) and broad and vertical jump (0.79). There were also lesser correlations between 10-yd and 20-yd dash (0.565), broad jump and 20-yd short shuttle (0.556), and vertical jump and 20-yd short shuttle (0.545). Most of these were to be expected, as the measurements were similar (for example arms and hand size), but I did find the correlation between the jumping measurements and the short shuttle to be interesting. It's not a super strong correlation, but maybe worth looking into a little closer.
@@ -366,6 +364,9 @@ ggplot(aes(x = twentyss, y = broad),
   geom_smooth(method='lm', aes(color='Regression')) +
   ylab("Broad Jump") +
   xlab("20-yard Short Shuttle")
+
+cor(combine$twentyss, combine$broad)
+
 ```
 
 Just looking at the scatter plot, it's a little hard to see much correlation, but it's much clearer with the mean and regression lines. The correlation appears to be negative, but remember that lower times in the short shuttle are actually better, so someone better (lower time) at the short shuttle generally seems to also be better (higher in inches) at the broad jump. Now let's look at two pairs of variables that are more closely correlated.
@@ -388,6 +389,11 @@ p2 = ggplot(aes(x = hands, y = arms),
   ylab("Arm Size")
 
 grid.arrange(p1, p2, ncol=1)
+
+print("Height to weight:")
+cor(combine$heightinchestotal, combine$weight)
+print("Hand to arm size:")
+cor(combine$hands, combine$arms)
 
 ```
 
@@ -463,20 +469,23 @@ Now let's try combining our datasets, and see how some of our combine measuremen
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots13}
 combine_and_stats <- merge(combine, stats, by=c('Player', 'Pos'))
+no_undrafted = subset(combine_and_stats, Draft_Pick != "Undrafted")
 ggplot(aes(x = fortyyd, y = Draft_Pick),
-       data=subset(combine_and_stats, fortyyd > 0)) +
+       data=subset(no_undrafted, fortyyd > 0)) +
   geom_jitter(alpha=0.2) +
   geom_line(stat = 'summary', fun.y = mean, aes(color='Mean')) +
   geom_smooth(method='lm', aes(color='Regression')) +
   xlab("40-Yard Dash Time") +
   ylab("Draft Position")
+
+cor(no_undrafted$fortyyd, no_undrafted$Draft_Pick)
 ```
 
 Very slight correlation here--I'm guessing this is something that would make more sense to group by position, which we'll do in the next section.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots14}
 ggplot(aes(x = Pos, y = Draft_Pick),
-       data=subset(stats, Draft_Pick == Draft_Pick)) +
+       data=no_undrafted) +
   geom_boxplot() +
   xlab("Position") +
   ylab("Draft Position") +
@@ -507,13 +516,14 @@ Definitely hand size to arm size, and weight to height. These were both very clo
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots1}
-ggplot(aes(x = age, y = Total_Injured),
+ggplot(aes(x = age, y = Total_Injured, color=position_group),
        data = injuries) +
-  geom_line(aes(color=position_group), stat='summary', fun.y=mean) +
-  geom_line(stat='summary', fun.y=mean, linetype=2)
+  geom_smooth(method='lm', se=FALSE, size=1)
+  #geom_line(aes(color=position_group), stat='summary', fun.y=mean) +
+  #geom_line(stat='summary', fun.y=mean, linetype=2)
 ```
 
-When looking at injured games per season by position grouping, we can see that most of these position groupings more or less follow the mean for all players, until you get to around age 33. At that point, certain position groupings--RB, TE, and WR--make a sizable jump in injured games per season. Let's do the same analysis but zoom in on age a bit.
+When looking at injured games per season by position grouping, we can see that most injured games per season tends to decrease for most position groupings, with the notable exceptions of linebackers and running backs. Let's do the same analysis but zoom in on age a bit.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots2}
 ggplot(aes(x = age, y = Total_Injured), data = injuries) +
@@ -528,14 +538,13 @@ Here we can see a little better what's going on--there are some really high inju
 
 combine$density.bucket = cut(combine$density,
                                   right = TRUE,
-                                  breaks = c(2.4, 3.0, 3.5, 4.0, 4.6))
+                                  breaks = c(2.4, 3.0, 3.5, 4.0, 4.4, 4.8))
 
-ggplot(aes(x=injured_pct), data = combine) +
-  geom_histogram(aes(color=density.bucket)) +
-  facet_wrap( ~ position_group)
+ggplot(aes(x=position_group, y=injured_pct), data = combine) +
+  geom_boxplot(aes(fill=density.bucket))
 ```
 
-This is another look at injury rates by position, this time with density thrown in as another variable. It's very easy to see the differences between the lighter and heavier position groupings. From this look, it's hard to see density among position groupings affecting the injured percentage much.
+This is another look at injury rates by position, this time with density thrown in as another variable. It's very easy to see the differences between the lighter and heavier position groupings. From this look, the effect of density on injury rates by position group appears almost random--for some injury rates tend to increase as density increases, and for others, the relationship is the inverse of that.
 
 Now let's look at how combine measurements affect when a player is drafted, controlling for player position this time.
 
@@ -564,7 +573,7 @@ Here we can see that for most position groupings, as a player's 40-yard dash tim
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots5}
 
-combine_and_stats$density <- combine_and_stats$weight / combine_and_stats$height
+combine_and_stats$density <- combine_and_stats$weight / combine_and_stats$heightinchestotal
 
 combine_and_stats.dp_by_pg_density <- combine_and_stats %>%
   filter(Draft_Pick != 'Undrafted' & position_group.y != 'ST') %>%
@@ -607,7 +616,6 @@ The relationship between draft position and 40-yard dash times broken down by pl
 ggplot(aes(x = AV / seasons_played, y = injured_pct),
        data=subset(stats, AV > 0)) +
   geom_jitter(alpha=0.2) +
-  geom_line(stat = 'summary', fun.y = mean, aes(color='Mean')) +
   geom_smooth(method='lm', aes(color='Regression')) +
   xlab("Approximate Value per Season") +
   ylab("Injured Percentage") +
