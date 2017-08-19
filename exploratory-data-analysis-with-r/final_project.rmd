@@ -3,18 +3,6 @@ by Seth Farnsworth
 ========================================================
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
-# Load all of the packages that you end up using in your analysis in this code
-# chunk.
-
-# Notice that the parameter "echo" was set to FALSE for this code chunk. This
-# prevents the code from displaying in the knitted HTML output. You should set
-# echo=FALSE for all code chunks in your file, unless it makes sense for your
-# report to show the code that generated a particular plot.
-
-# The other parameters for "message" and "warning" should also be set to FALSE
-# for other code chunks once you have verified that each plot comes out as you
-# want it to. This will clean up the flow of your report.
-
 library(ggplot2)
 library(gridExtra)
 library(dplyr)
@@ -140,17 +128,18 @@ The 40-yard dash data is clearly skewed right. The 10-yard and 20-yard dashes ar
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots10}
 plot1 = ggplot(aes(fortyyd), data=subset(combine, fortyyd != 0)) +
   geom_histogram(binwidth=0.01, color='red', fill='gray') +
-  xlab('40 Yard Dash (seconds)')
+  xlab('40 Yard Dash (seconds)') +
+  scale_x_continuous(breaks=seq(4.2, 5.8, 0.1))
 
 plot2 = ggplot(aes(fortyyd), data=subset(combine, fortyyd != 0)) +
   geom_histogram(binwidth=0.01, color='red', fill='gray') +
   xlab('40 Yard Dash (seconds) (log10)') +
-  scale_x_log10()
+  scale_x_log10(breaks=seq(4.2, 5.8, 0.1))
 
 plot3 = ggplot(aes(fortyyd), data=subset(combine, fortyyd != 0)) +
   geom_histogram(binwidth=0.01, color='red', fill='gray') +
   xlab('40 Yard Dash (seconds) (square root)') +
-  scale_x_log10()
+  scale_x_sqrt(breaks=seq(4.2, 5.8, 0.1))
 
 grid.arrange(plot1, plot2, plot3)
 ```
@@ -341,6 +330,7 @@ combine_subset <- combine[, c(
   'arms',
   'bench',
   'broad',
+  'vertical',
   'fortyyd',
   'hands',
   'tenyd',
@@ -351,7 +341,7 @@ combine_subset <- combine[, c(
   'density'
 )]
 cor(combine_subset)
-ggpairs(combine_subset)
+ggcorr(combine_subset)
 ```
 
 The strongest correlations are between arms and hand size (0.995) and broad and vertical jump (0.79). There were also lesser correlations between 10-yd and 20-yd dash (0.565), broad jump and 20-yd short shuttle (0.556), and vertical jump and 20-yd short shuttle (0.545). Most of these were to be expected, as the measurements were similar (for example arms and hand size), but I did find the correlation between the jumping measurements and the short shuttle to be interesting. It's not a super strong correlation, but maybe worth looking into a little closer.
@@ -519,8 +509,6 @@ Definitely hand size to arm size, and weight to height. These were both very clo
 ggplot(aes(x = age, y = Total_Injured, color=position_group),
        data = injuries) +
   geom_smooth(method='lm', se=FALSE, size=1)
-  #geom_line(aes(color=position_group), stat='summary', fun.y=mean) +
-  #geom_line(stat='summary', fun.y=mean, linetype=2)
 ```
 
 When looking at injured games per season by position grouping, we can see that most injured games per season tends to decrease for most position groupings, with the notable exceptions of linebackers and running backs. Let's do the same analysis but zoom in on age a bit.
